@@ -34,7 +34,8 @@ const mysqlConf = {
   user : 'yihao',
   port:'3306',
   password : '960404',
-  database : 'test_database'
+  database : 'test_database',
+  multipleStatements:true
 };
 // 用于保存数据连接实例
 let db = null;
@@ -77,26 +78,6 @@ function connect() {
   }, 3600000);
 }
 connect();
-//connect to mysql
-// let db = mysql.createConnection({
-//   host : '47.252.83.229',
-//   user : 'yihao',
-//   port:'3306',
-//   password : '960404',
-//   database : 'test_database'
-// });
-// db.connect(function(err) {
-//   if (err) {
-//     console.error('连接失败: ' + err.stack);
-//     throw(err);
-//   }
-//   else{
-//     console.log('连接成功 id ' + db.threadId);
-//   }
-//
-// });
-
-
 module.exports = function (app) {
   //url: http://localhost:8080
   app.all('*', function(req, res, next) {
@@ -110,6 +91,25 @@ module.exports = function (app) {
   //GET return all the info from DB
   //POST create a new record to DB
   //PUT update the record in DB
+  app.get("/", function (req, res) {
+    //GET problem by id
+    // let id = req.params.id;
+    // let sql = `SELECT * FROM problem WHERE id = ${id}`;
+    // db.query(sql, (err, data) => {
+    //   if (err) {
+    //     console.log("error!", err);
+    //   } else {
+    //     console.log("success!", data);
+    //     let processed_data = JSON.stringify(data);
+    //     processed_data = JSON.parse(processed_data);
+    //     for(let i in processed_data){
+    //       processed_data[i].start_format = process_db(processed_data[i].start_format)
+    //     }
+    //     res.send(processed_data);
+    //   }
+    // });
+    res.send('Welcome to Backend');
+  });
   //API for problems
   app.get("/problem/:id", function (req, res) {
     //GET problem by id
@@ -341,6 +341,59 @@ module.exports = function (app) {
         }
 
       });
+    })
+  });
+
+  //API for topics
+  app.get("/all_topic", function (req, res) {
+    //GET problem by id
+    let id = req.params.id;
+    let sql = `SELECT * FROM topics`;
+    db.query(sql, (err, data) => {
+      if (err) {
+        console.log("error!", err);
+      } else {
+        console.log("success!", data);
+
+        res.send(data);
+      }
+    });
+  });
+  app.get("/sub_topic/:id", function (req, res) {
+    //GET problem by id
+    let id = req.params.id;
+    let sql = `SELECT * FROM topics WHERE topic_id = ${id}`;
+    db.query(sql, (err, data) => {
+      if (err) {
+        console.log("error!", err);
+      } else {
+        console.log("success!", data);
+        res.send(data);
+      }
+    });
+  });
+  app.put("/topic/update_counter", function (req, res) {
+    req.on('data',function(data){
+
+      let body = JSON.parse(data);
+      let model_sql =
+          'UPDATE topics SET counter = counter + 1 WHERE name = ?';
+      let sqls = ''
+      body.forEach((item, index)=>{
+        sqls += mysql.format(model_sql, item.name) + ';'
+      })
+      db.query(sqls, (err, ret) => {
+        if (err) {
+          console.log("error!", err);
+          res.send('Fail to update');
+        } else {
+          // if(ret.length > 0){
+          console.log("success!", ret);
+          res.send( JSON.stringify(ret));
+          // }
+        }
+      });
+
     })
   });
 
